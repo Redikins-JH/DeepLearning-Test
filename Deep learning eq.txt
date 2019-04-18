@@ -1,0 +1,831 @@
+# Keras More & Deep Learning
+
+## CIFAR-10
+
+### Your name :
+
+#### 실습목표<br>
+1. 딥러닝의 기본 아이디어를 이해한다.
+2. keras를 이용하여 Optimizer를 설정할 수 있다.
+3. keras를 이용하여 Dropout이 가능하다.
+4. keras를 이용하여 초기값을 설정할 줄 안다.
+5. keras를 이용하여 Batch Normalization이 가능하다.
+6. keras의 callback 기능을 사용할 줄 안다.
+
+--------------------------
+Rayleigh Kim @ D:plus
+
+## Deep Learning on CIFAR-10
+
+### Library Loading
+
+'''
+matplolib inline 명령어를 통해서
+matplot으로 그리는 플롯들을 주피터 노트북 내에서 볼 수 있게 해준다.
+포맷을 retina로 바꾸면 그래프의 화질이 훨씬 좋아진다.
+'''
+%matplotlib inline
+%config InlineBackend.figure_format = 'retina'
+
+'''
+라이브러리들을 불러오자.
+'''
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import keras
+ 
+from keras.utils import np_utils
+from keras.layers import Dense, BatchNormalization, Activation, Dropout
+from keras import layers, models
+
+import random as rd
+
+from sklearn.metrics import accuracy_score
+
+### Data Loading & Preparation
+
+(train_x, train_y), (test_x, test_y) = tf.keras.datasets.cifar10.load_data()
+
+MNIST데이터셋과 모양 차이를 보자.
+
+print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)
+
+(50000, 32, 32, 3) 
+
+32픽셀 그림
+
+3 >>  R, G, B
+
+labels = { 0 : 'Airplane',
+          1 : 'Automobile',
+          2 : 'Bird',
+          3 : 'Cat',
+          4 : 'Deer',
+          5 : 'Dog',
+          6 : 'Frog',
+          7 : 'Horse',
+          8 : 'Ship',
+          9 : 'Truck' }
+
+print(labels)
+
+'''
+Ctrl+Enter를 이용하여
+반복 실행 해보자!
+'''
+
+id = rd.randrange(0,10000)
+
+print('id = {}'.format(id))
+print('다음 그림은 {} 입니다.'.format( labels[test_y[id][0]] ))
+plt.imshow(test_x[id])
+plt.show()
+
+단순한 뉴럴넷은 32x32x3의  데이터를 인풋으로 받지 못한다.
+
+납작하게 모양을 바꾸자.
+
+train_x = train_x.reshape([train_x.shape[0],-1])
+test_x = test_x.reshape([test_x.shape[0],-1])
+
+print(train_x.shape, test_x.shape)
+
+이미지의 값이기 때문에 0 ~ 255 사이의 값을 갖는다.
+
+전부 0~1사이의 값을 갖도록 scale을 조정하자!
+
+**생각해볼 것 : 데이터들간의 scale이 다르면 무슨차이가 생길까?**
+
+![unscaled](https://i.stack.imgur.com/GeAcX.png) ![scaled](https://i.stack.imgur.com/30hnH.png)
+
+
+
+---
+
+
+이미지 데이터는 스케일이 그렇게 중요하지 않다. 
+
+
+
+print('max :', train_x.max(),'  min :', train_x.min())
+
+max_num = train_x.max()
+
+train_x = train_x/max_num
+test_x = test_x/max_num
+
+print('max :', train_x.max(),'  min :', train_x.min())
+
+# One-hot Encoding
+# from keras.utils import np_utils 을 사용한다.
+
+train_y = np_utils.to_categorical(train_y)
+test_y = np_utils.to_categorical(test_y)
+
+print(test_y[2])
+
+train_x.shape
+
+### Sequential을 이용하여 모델링을 할거야! (추천)
+
+모델링을 하기 전에!
+* 로지스틱 리그레션의 기능을 안다!
+* 뉴런의 구조를 안다!
+* 뉴럴넷의 구조를 안다.
+* 히든레이어 안의 뉴런 하나의 역할을 이해한다.
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, input_shape=(3072,), activation='relu', name = 'Hidden1'))
+# name = 'Hidden1' 레이어에 이름을 붙일 수 있다. 나중에 summary할 때 깔끔하다.
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, activation = 'relu', name = 'Hidden2') )
+model.add( Dense(512, activation = 'relu', name = 'Hidden3') )
+
+# output Layer
+model.add( layers.Dense(10, activation = 'softmax')     )
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = 'adam',
+              metrics =['accuracy'])
+
+print('히든 레이어를 여러개 갖는 딥러닝 모델')
+print('딥러닝이라 불리는 모델들 중 가장 기본 구조이다.')
+model.summary()
+
+결과를 보면 input layer는 보이지 않는다. 처음 레고 블럭에 끼워넣었다.
+
+params가 4백만!
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 100,
+                    validation_split = 0.2, verbose=1)
+
+
+performance_test = model.evaluate(test_x, test_y, batch_size = 100)
+
+print('Test Loss : {:.6f},  Test Accuracy : {:.3f}%'.format(performance_test[0], performance_test[1]*100))
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+형편 없는 정확도
+
+뿐만 아니라 validation 은 더 형편 없다. overfit의 문제가 아니라 모델을 잘 못 만든 것.
+
+이제부터 고군분투 해서 성능을 좋게 해보자.
+
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['loss'])
+plt.plot(history['val_loss'])
+plt.title('Loss : Training vs Validation')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+## One more 1 : Optimizer & Learnig rate
+
+1. optimizer를 상세히 조절할 수 있다. 자세한 내용은 [공식 문서](https://keras.io/optimizers/)를 참고하자!
+2. **Learning Rate에 대해선 이해가 필요하다**
+
+다음 그림을 참고하자
+
+![lr](https://jed-ai.github.io//images/optimization/opt2/fig2.gif)
+
+[너무 커서 수렴 못하는 케이스도 있다.](https://jed-ai.github.io//images/optimization/opt2/fig9.gif)
+
+[크기 때문에, local minima를 빠져나오기도 한다!](https://jed-ai.github.io//images/optimization/opt2/fig8.gif)
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, input_shape=(3072,), activation='relu', name = 'Hidden1'))
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, activation = 'relu', name = 'Hidden2') )
+model.add( Dense(512, activation = 'relu', name = 'Hidden3') )
+
+# output Layer
+model.add( layers.Dense(10, activation = 'softmax')     )
+
+from keras import optimizers
+
+# Optimizer 상세 조절!
+# lr : Learning Rate에 대해서 공부하자!
+# adam = optimizers.Adam(lr=0.001, decay=0.0)
+
+adam = optimizers.Adam(lr=0.01, decay=0.0001) # lr을 조정해보자.
+# learning rate을 0.01로 시작하고 0.001 씩 줄여간다.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 1024,
+                    validation_split = 0.2, verbose=1)
+
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+10% 정확도? 아무거나 찍어도 그건 나온다. 10개 그림 중 하나. 
+
+from keras import optimizers
+
+# Optimizer 상세 조절!
+# lr : Learning Rate에 대해서 공부하자!
+# adam = optimizers.Adam(lr=0.001, decay=0.0)
+
+adam = optimizers.Adam(lr=0.0001, decay=0.0001) # lr을 조정해보자.
+# 0.01 이었던 걸 0.0001 으로 변경.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 1024,
+                    validation_split = 0.2, verbose=1)
+
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+## One more 2 : Drop out
+
+![일단 보자](https://s3-ap-south-1.amazonaws.com/av-blog-media/wp-content/uploads/2018/04/1IrdJ5PghD9YoOyVAQ73MJw.gif)
+
+걱정 거리 중 하나.
+
+**만일, 너무 특정노드에만 판단을 의존하면 어쩌지?**
+
+Dropout() 을 이용해서, 랜덤하게 노드들을 inactive하자!
+
+Dropout(0.6) : 학습 단계마다, 랜덤하게 60%의 노드들을 inactive시킨다!
+
+
+
+---
+죽은 노드 (drop out)들은 뒤로 정보를 보내지 않는다.
+
+앞에 있는 노드 몇개가 너무 독특하다면 뒤에 있는 노드들은 이 독특한 것들의 영향을 지나치게 받는다.
+
+뒤에 있는 노드가 앞의 노드의 특징을 골고루 잘 고려하는게 아니라, 몇 개만 고려하면 문제가 생긴다.
+
+머신러닝에 앙상블이 있다면 딥러닝에는 drop out이 있다.
+
+0.6 = 랜덤으로 60%의 노드를 죽인다.
+
+
+
+
+---
+
+
+무조건 성능이 좋아지나? 
+아니다! 보편적으로 좋아진다. 특정 모델에서는 수학적 이슈로 더 나빠진다.
+
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, input_shape=(3072,), activation='relu', name = 'Hidden1'))
+model.add( Dropout(0.2) )
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, activation = 'relu', name = 'Hidden2') )
+model.add( Dropout(0.2) )
+
+model.add( Dense(512, activation = 'relu', name = 'Hidden3') )
+model.add( Dropout(0.2) )
+
+# output Layer
+model.add( layers.Dense(10, activation = 'softmax')     )
+# 여기서는 drop out하면 안된다. 최종 판단이므로.
+
+adam = optimizers.Adam(lr=0.0005) # lr을 조정해보자.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 1024,
+                    validation_split = 0.2, verbose=1)
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+## One more 3 : Initialization
+
+Weights, bias들의 '시작점'이 중요하다.
+왜 중요한지는 눈으로 보면 안다!
+
+![1](https://jed-ai.github.io//images/optimization/opt2/fig6.gif)
+![2](https://jed-ai.github.io//images/optimization/opt2/fig7.gif)
+
+
+* kernel_initializer : 가중치에 대한 초기화 방법 결정
+* bias_initializer : 편차에 대한 초기화 방법 결정
+
+'glorot_uniform', 'glorot_normal' 을 추천한다
+
+
+
+---
+
+시작점은 랜덤으로 결정된다. 이걸 어떻게 "잘"할까의 고민. 고군분투의 역사가 있다.
+
+이상한 곳에서 시작되면 엉뚱한 곳으로 찾아간다. 
+
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, input_shape=(3072,), activation='relu', name = 'Hidden1',
+                kernel_initializer = 'uniform',
+                bias_initializer = 'uniform'))
+
+####
+# kernel_initializer 가중치 weight 아래 수식의 w
+# bias intercetp 절편 아래 수식의 b
+# y =w1x1 + w2x2 + b 
+# Keras의 디폴트 initializer는 glorot_uniform. 자비에와 요수아의 논문에서 소개. 보편적으로 좋은 성능을 보인다.
+# uniform 으로 바꾸었으나 성능 별로다. 더 나쁘다. validation 이 술취한 모습이다.
+
+
+model.add( Dropout(0.1) )
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, activation = 'relu', name = 'Hidden2',
+                kernel_initializer = 'uniform',
+                bias_initializer = 'uniform') )
+model.add( Dropout(0.1) )
+
+model.add( Dense(512, activation = 'relu', name = 'Hidden3',
+                kernel_initializer = 'uniform',
+                bias_initializer = 'uniform') )
+model.add( Dropout(0.1) )
+
+# output Layer
+model.add( layers.Dense(10, activation = 'softmax')   )
+
+
+# # 혹시 이미 그려둔 그래프가 있다면 날려줘!
+# keras.backend.clear_session()
+
+# # model에 순차적으로 레이어를 쌓아가겠다는 의도!
+# model = models.Sequential()
+
+# # Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# # 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+# ### 노드 수를 마음 껏 조절해보자!
+# model.add( Dense(1024, input_shape=(3072,), activation='relu', name = 'Hidden1',
+#                 kernel_initializer = 'glorot_uniform',
+#                 bias_initializer = 'glorot_uniform'))
+# model.add( Dropout(0.1) )
+
+# ### 노드 수를 마음 껏 조절해보자!
+# model.add( Dense(1024, activation = 'relu', name = 'Hidden2',
+#                 kernel_initializer = 'glorot_uniform',
+#                 bias_initializer = 'glorot_uniform') )
+# model.add( Dropout(0.1) )
+
+# model.add( Dense(512, activation = 'relu', name = 'Hidden3',
+#                 kernel_initializer = 'glorot_uniform',
+#                 bias_initializer = 'glorot_uniform') )
+# model.add( Dropout(0.1) )
+
+# # output Layer
+# model.add( layers.Dense(10, activation = 'softmax')   )
+
+adam = optimizers.Adam(lr=0.0005) # lr을 조정해보자.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 1024,
+                    validation_split = 0.2, verbose=1)
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+## One more 4 : Batch normalization
+
+![bn](https://camo.githubusercontent.com/944f05a2565de729ae03d76bb2cb6f9c48e2e552/68747470733a2f2f6d6f7276616e7a686f752e6769746875622e696f2f7374617469632f726573756c74732f746f7263682f352d342d322e676966)
+
+위에서 Scaling을 왜 하는지에 대해서 다뤘다.
+
+Scaling은, Input Layer에 데이터를 넣기 전에 하는 것인데.
+
+1. Hidden Layer를 위한 normalization은 없는가?
+2. 그걸 어느정도로 해야 할지 자동화 할 수는 없는가?
+
+
+
+---
+
+
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, input_shape=(3072,), name = 'Hidden1', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform'))
+# 위의 코드에서 relu 제거. BatchNormalization을 하고 나서, activation을 한다.
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+# 뿐만 아니라 elu를 사용한다. relu의 음수 영역 기울기를 미세하게 조정한다.
+
+
+model.add( Dropout(0.1) )
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(1024, name = 'Hidden2', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform') )
+
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+model.add( Dropout(0.1) )
+
+model.add( Dense(512, name = 'Hidden3', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform') )
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+model.add( Dropout(0.1) )
+
+# output Layer
+model.add( layers.Dense(10, name = 'OutputLayer', #activation = 'softmax'
+                       kernel_initializer = 'glorot_uniform',
+                       bias_initializer = 'glorot_uniform') )
+model.add(BatchNormalization())
+model.add(Activation('softmax'))
+
+adam = optimizers.Adam(lr=0.0005) # lr을 조정해보자.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=15, batch_size = 1024,
+                    validation_split = 0.2, verbose=1)
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+performance_test = model.evaluate(test_x, test_y, batch_size = 100)
+
+print('Test Loss : {:.6f},  Test Accuracy : {:.3f}%'.format(performance_test[0], performance_test[1]*100))
+
+그나마 training은 좋아졌다. (45% >> 40%???? ) validation은 아니다. 
+
+그렇다면 
+1. 데이터가 제대로 된 건지 확인해 봐야한다. (우리 경우는 데이터 문제가 아니다. 같은 데이터로 성능 90% 내는 사람들 있다)
+2. 모델이 잘 못 된 것인지 확인해야 한다.
+
+
+## One More Last ! : EarlyStopping, and Callbacks
+
+끝까지 가본다!
+
+# 혹시 이미 그려둔 그래프가 있다면 날려줘!
+keras.backend.clear_session()
+
+# model에 순차적으로 레이어를 쌓아가겠다는 의도!
+model = models.Sequential()
+
+# Sequential()을 사용하면, Input Layer는 자동으로 설계한다고 생각하면 됨!
+
+# 첫번째 Hidden 레이어를 add할 때는 input의 shape를 항상 정해줘야 한다!
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(2048, input_shape=(3072,), name = 'Hidden1', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform'))
+
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+
+model.add( Dropout(0.1) )
+
+### 노드 수를 마음 껏 조절해보자!
+model.add( Dense(2048, name = 'Hidden2', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform') )
+
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+model.add( Dropout(0.1) )
+
+model.add( Dense(512, name = 'Hidden3', # activation = 'relu',
+                kernel_initializer = 'glorot_uniform',
+                bias_initializer = 'glorot_uniform') )
+model.add(BatchNormalization())
+model.add(Activation('elu'))
+model.add( Dropout(0.1) )
+
+# output Layer
+model.add( layers.Dense(10, name = 'OutputLayer', #activation = 'softmax'
+                       kernel_initializer = 'glorot_uniform',
+                       bias_initializer = 'glorot_uniform') )
+model.add(BatchNormalization())
+model.add(Activation('softmax'))
+model.summary()
+# Total params: 11,562,546
+
+adam = optimizers.Adam(lr=0.0001) # lr을 조정해보자.
+
+# 컴파일 해주렴!
+model.compile(loss = 'categorical_crossentropy', optimizer = adam,
+              metrics =['accuracy'])
+
+from keras.callbacks import EarlyStopping
+
+# 학습이 망가지기 시작하면 멈춰!
+es = EarlyStopping(monitor = 'val_loss',
+                  min_delta = 0, # 개선되고 있다고 판단하기 위한 최소 변화량
+                  patience = 10, # 개선 없는 epoch 얼마나 기달려 줄거야?
+                  verbose = 1
+                  )
+
+
+# 데이터를 넣어서 학습시키자!
+history = model.fit(train_x, train_y, epochs=20000, batch_size = 1024,
+                    validation_split = 0.2, verbose=1,
+                   callbacks = [es])
+
+performance_test = model.evaluate(test_x, test_y, batch_size = 100)
+
+print('Test Loss : {:.6f},  Test Accuracy : {:.3f}%'.format(performance_test[0], performance_test[1]*100))
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['acc'])
+plt.plot(history['val_acc'])
+plt.title('Accuracy : Training vs Validation')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+training 은 좋아졌으나, validataion은 엉망이다. 
+test는 45%밖에 안된다.
+
+if not isinstance(history, dict):
+    history = history.history
+
+plt.plot(history['loss'])
+plt.plot(history['val_loss'])
+plt.title('Loss : Training vs Validation')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Training', 'Validation'], loc=0)
+plt.show()
+
+pred_train = model.predict(train_x)
+pred_test = model.predict(test_x)
+
+single_pred_train = pred_train.argmax(axis=1)
+single_pred_test = pred_test.argmax(axis=1)
+
+
+dnn_train_accuracy = accuracy_score(train_y.argmax(axis=1), single_pred_train)
+dnn_test_accuracy = accuracy_score(test_y.argmax(axis=1), single_pred_test)
+
+
+print('DNN Classifier')
+print('트레이닝 정확도 : {:.2f}%'.format(dnn_train_accuracy*100))
+print('테스트 정확도 : {:.2f}%'.format(dnn_test_accuracy*100))
+
+'''
+성능 확인을 위해
+   Ctrl+Enter를 이용하여
+반복 실행 해보자!
+'''
+
+id = rd.randrange(0,10000)
+
+print('id = {}'.format(id))
+print('다음 그림은 {} 입니다.'.format(labels[test_y.argmax(axis=1)[id]]))
+print('모델의 예측 : {}'.format(labels[single_pred_test[id]]))
+
+prob = np.floor(pred_test[id]*100).tolist()
+prob_dict = {}
+
+for idx, prob in enumerate(prob) :
+    prob_dict[ labels[idx] ] = prob
+
+print('모델의 카테고리별 확률 : ')
+print(prob_dict)
+
+if test_y.argmax(axis=1)[id] == single_pred_test[id] :
+    print('정답입니다')
+else : 
+    print('틀렸어요')
+plt.imshow(test_x[id].reshape([32,32,-1]))
+plt.show()
+
+'''
+틀린 것만 관찰해보자!
+
+Ctrl+Enter를 이용하여
+반복 실행 해보자!
+'''
+
+true_false = (test_y.argmax(axis=1) == single_pred_test)
+f_id = np.where(true_false == False)[0]
+f_n = len(f_id)
+
+id = f_id[rd.randrange(0,f_n)]
+
+
+print('id = {}'.format(id))
+print('다음 그림은 {} 입니다.'.format(labels[test_y.argmax(axis=1)[id]]))
+print('모델의 예측 : {}'.format(labels[single_pred_test[id]]))
+
+prob = np.floor(pred_test[id]*100).tolist()
+prob_dict = {}
+
+for idx, prob in enumerate(prob) :
+    prob_dict[ labels[idx] ] = prob
+
+print('모델의 카테고리별 확률 : ')
+print(prob_dict)
+
+if test_y.argmax(axis=1)[id] == single_pred_test[id] :
+    print('정답입니다')
+else : 
+    print('틀렸어요')
+plt.imshow(test_x[id].reshape([32,32,-1]))
+plt.show()
+
+
+
+## Now your turn!
+
+Fashion MNIST!
+
+배운 지식 총 동원하여 Fashion MNIST 데이터를 분류해보자.
+
+'''
+matplolib inline 명령어를 통해서
+matplot으로 그리는 플롯들을 주피터 노트북 내에서 볼 수 있게 해준다.
+포맷을 retina로 바꾸면 그래프의 화질이 훨씬 좋아진다.
+'''
+%matplotlib inline
+%config InlineBackend.figure_format = 'retina'
+
+'''
+라이브러리들을 불러오자.
+'''
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import keras
+
+from keras.utils import np_utils
+from keras.layers import Dense, BatchNormalization, Activation, Dropout
+from keras import layers, models
+
+import random as rd
+
+from sklearn.metrics import accuracy_score
+
+(train_x, train_y), (test_x, test_y) = tf.keras.datasets.fashion_mnist.load_data()
+
+print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)
+
+labels = { 0 : 'T-shirt/top',
+          1 : 'Trouser',
+          2 : 'Pullover',
+          3 : 'Dress',
+          4 : 'Coat',
+          5 : 'Sandal',
+          6 : 'Shirt',
+          7 : 'Sneaker',
+          8 : 'Bag',
+          9 : 'Ankle boot' }
+
+print(labels)
+
+'''
+Ctrl+Enter를 이용하여
+반복 실행 해보자!
+'''
+
+id = rd.randrange(0,10000)
+
+print('id = {}'.format(id))
+print('다음 그림은 {} 입니다.'.format( labels[test_y[id]] ))
+plt.imshow(test_x[id])
+plt.show()
+
+train_x = train_x.reshape([train_x.shape[0],-1])
+test_x = test_x.reshape([test_x.shape[0],-1])
+
+print(train_x.shape, test_x.shape)
+
+
+
+
+
