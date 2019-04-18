@@ -1,0 +1,53 @@
+2019-04-18 파이썬 수업 1일차                                     **ftp://192.168.80.53/             name : python, password : prog
+
+<오전>
+[Python의 특징]
+
+*Multiparadigm
+
+*파이썬은 내부적으로 C언어로 되어 있다.
+=>Cpython
+
+,Jython(Java 기반의 python도 있다.
+
+
+*IDLE = PyCham, Spyder, Eclipse, Jupyter Notebook
+
+*한줄 주석 = #
+여러줄 주석 = """
+
+
+*GC(Garbage Collection)
+-더이상 참조되지 않는 메로리를 자동으로 회수한다
+ex) a=10
+    a=3.14
+=>10을 참조하던 스택은 gc로 자동으로 회수된다.	
+
+*정수형
+
+0x숫자 = 16진법의 숫자 표현
+0o숫자 = 8진법
+0b숫자 = 2진법
+
+ex) a= 0b1010;  a; 10
+
+
+*문자열
+
+C: "Hello" -> byte 배열(문자하나마다 아스키코드값)
+Java : "Hello" -> Unicode Code Point
+               -> 16비트 유니코드 값(UTF-16)
+Python: b"Hello" -> byte 배열
+         "Hello" -> 16비트 유니코드 값(UTF-16)
+
+
+
+*from __future__ import division   ##2.버전의 float 호환성 유지 위해 __ㅇㅇ__ 모듈 임폴트해주는 경우 종종 볼수 있음
+
+a= 10
+b =3
+print(a/b)
+
+
+
+*python3.6  폴더안 script   -> shift+마우스 오른쪽 cmd 오픈   -> pip install jupyter   설치
