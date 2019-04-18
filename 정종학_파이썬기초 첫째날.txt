@@ -50,4 +50,21 @@ print(a/b)
 
 
 
-*python3.6  폴더안 script   -> shift+마우스 오른쪽 cmd 오픈   -> pip install jupyter   설치
+*python3.6  폴더안 script   -> shift+마우스 오른쪽 cmd 오픈   -> pip install jupyter   설치   (jupyter 설치하면 pip install ipython 자동 설치됨)
+
+
+script 폴더 안 jupyter-notebook.exe. 를 실행하세요.
+
+jupyter-notebook.exe. 복사후 바로가기 파일을 내 작업 폴더에서 생성하여 시작위치를 그곳으로 설정해준다
+
+
+
+
+
+
+
+*데이터 대량 처리 유용 라이브러리 numpy
+*그래프 그리기 유용 라이브러리 matploylib
+
+listcomprehention? = listcomp
+
