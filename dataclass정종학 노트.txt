@@ -95,8 +95,8 @@ vs
 pandas
 
 **
-Series object   (key값과 해당 값이 같이 들어있다.)
-DtaFrame object
+한줄 - Series object   (key값과 해당 값이 같이 들어있다.)
+두줄이상 테이블 - DtaFrame object
  - Numpy array와 비슷하다.
  - dict와 비슷하다.
 
