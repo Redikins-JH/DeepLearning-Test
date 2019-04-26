@@ -1,0 +1,116 @@
+2019/04/25 목요일
+
+* standard python distribution
+ : pip
+
+* andconda (or miniconda) distribution
+ : conda
+
+
+
+ftp://192.168.80.53
+Name : python
+Passwd : data
+
+
+
+* IPython + Jupyter 함께 사용하는 것이 좋은 방법중 하나다
+
+
+[CMD] c:/python36/scrpits
+pip install --upgrade jupyter
+pip install --upgrade spyder
+pip install --upgrade numpy
+pip install --upgrade matplotlib
+pip install --upgrade pandas
+
+
+* Python 통합개발환경(IDE)
+ - PyDev(based on Eclipse): 완전무료x (회사에서 사용해도 무료)
+ - PyCharm : 오픈소스 개발자는 무료 (회사용으로는 무료아님)
+ - Spyder : 무료
+
+
+
+**성능측정
+%timeit, %%timeit, %time
+??
+
+
+** 주피터 단축기
+esc 후 dd 는 셀 지우기
+jk는 위아래 
+
+셀 에서 esc후 a 누르면 바로 위에 셀 추가
+
+
+**list
+array
+
+시험*******************
+
+numpy가 제공하는 array 이름은 무엇인가?   ndarray   (n차원 dimension array)
+
+
+***miniconda 설치
+conda create -y -n py3.6 python=3.6    (가상환경 하나 만들어주는 것)
+conda activate py3.6
+(<-> conda deactivate)
+
+외부 라이브러리 설치 가능
+ex) conda install jupyter
+conda install -y spyder
+conda install -y numpy matplotlib pandas
+
+***
+np.save -> 배열 한개를 저장
+np.saved - >
+np.saved_compressed
+
+***
+  Series object
+-> NumPy 배열과 비슷하다.
+-> dict(key+value형식으로 자료 관리)와 비슷하다.
+---------------
+Hash Table or Hash Map
+
+
+
+금요일
+
+**
+pip install --upgrade xlrd openpyxl sqlalchemy
+
+**
+conda infro --envs
+conda activate py3.6
+conda install xlrd
+    openpyxl
+sqlalche
+
+
+**
+relational database :sql  (structured qurery languae
+vs
+pandas
+
+**
+Series object   (key값과 해당 값이 같이 들어있다.)
+DtaFrame object
+ - Numpy array와 비슷하다.
+ - dict와 비슷하다.
+
+Index Object (key 값만 들어있어 개념적으로는 set과 비슷하다)
+ - Immutable array (수정불 가능한) mutable (=변하는)
+ - Ordered set 과 비슷하다.
+
+
+*주피터
+%autosave 0   # 자동저장 끄기
+
+
+
+##stackshare
+
+
+
